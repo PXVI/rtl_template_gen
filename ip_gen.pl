@@ -43,6 +43,12 @@ $default_template_dir = "$dirname/template_dir";
 $default_proj_name = "ip_example_name";
 $default_top_name = $default_proj_name."_top"; # This is the name of the module tops which will be used throughout the template
 $default_env_var = uc $default_proj_name."_home"; # This is the environment variable which will be used to point to this IP's install path
+$author_name = "k-sva";
+$copyright_name = "k-sva";
+
+$temp_year = `date "+%Y"`;
+chomp($temp_year);
+$copyright_year = $temp_year;
 
 # Debug subroutines
 sub debug
@@ -114,7 +120,7 @@ sub write_file
     # https://perlmaven.com/how-to-replace-a-string-in-a-file-with-perl
     my ($filename, $content) = @_;
 
-    open my $out, '>:encoding(UTF-8)>', $filename or die "S - Error. Could not open file ( $filename ) for writing.";
+    open my $out, '>:encoding(UTF-8)', $filename or die "S - Error. Could not open file ( $filename ) for writing.";
     print $out $content;
     close $out;
 
@@ -234,6 +240,31 @@ sub main
         printn( "S - Error. Failed to copy the template files into the destination directory. Exiting script." );
     }
 
+    # Take the author's name, copyright year and copyright owner's name
+    print( "S - Enter the author's name ( leave empty for default name ) : " );
+    $user_author_name = <STDIN>;
+    chomp($user_author_name);
+    if ( $user_author_name eq "" )
+    {
+        $user_author_name = $author_name;
+    }
+    
+    print( "S - Enter the copyright author's name ( leave empty for default name. license is MIT ) : " );
+    $user_copyright_name = <STDIN>;
+    chomp($user_copyright_name);
+    if ( $user_copyright_name eq "" )
+    {
+        $user_copyright_name = $copyright_name;
+    }
+    
+    print( "S - Enter the copyright year ( leave empty for current year ) : " );
+    $user_copyright_year = <STDIN>;
+    chomp($user_copyright_year);
+    if ( $user_copyright_year eq "" )
+    {
+        $user_copyright_year = $copyright_year;
+    }
+
     # Go through every file and first rename the files with the project name 
     # In the template files, the ip_amba_apb_slave has been used as the project/IP name
     # So text replacement will be done for files with have a substring matching this
@@ -294,12 +325,25 @@ sub main
             debug( "File Traversed : $_" );
 
             # Text replacement code
+            debug( "User Author : $user_author_name" );
+            debug( "User Copyright Author : $user_copyright_name" );
+            debug( "User Copyright Year : $user_copyright_year" );
             my $data = read_file($_);
             $data =~ s/ip_amba_apb_slave/$proj_name/g;
-            debug( "$data" );
-            #write_file($_, $data); TODO : Code is pending from here
+            $data =~ s/Author       :\s*[a-zA-Z-_]*/Author       : $user_author_name/g;
+            $data =~ s/Copyright [(]c[)] 2020.*/Copyright (c) $user_copyright_year $user_copyright_name/g;
+            $temp = uc $proj_name;
+            $data =~ s/IP_AMBA_APB_SLAVE/$temp/g;
+            $temp = `date "+%H:%M:%S %Z, %d %B, %Y [ %A ]"`;
+            chomp($temp);
+            $data =~ s/Date Created : .*/Date Created : $temp/g;
+            #debug( "$data" );
+            write_file($_, $data);
         }
     }
+
+    printn( "S - Remaining files have been moved and modified." );
+    printn( "S - Repository for $proj_name has been created." );
 }
 
 # ----
