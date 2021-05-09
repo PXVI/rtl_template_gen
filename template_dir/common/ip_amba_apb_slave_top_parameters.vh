@@ -30,14 +30,9 @@
 
  * ----------------------------------------------------------------------------------- */
 
+// ----------------------
 // Declaration Parameters
 // ----------------------
 `define IP_AMBA_APB_SLAVE_PARAM_DECL #( \
-                                        parameter PRDATA_width = `PRDATA_width, \
-                                        parameter PWDATA_width = `PWDATA_width, \
-                                        parameter PSTRB_width = `PSTRB_width, \
-                                        parameter PADDR_width = `PADDR_width, \
-                                        parameter PSELx_width = `PSELx_width, \
-                                        parameter WORD_LENGTH = `PRDATA_width, \
-                                        parameter MEM_DEPTH = `MEM_ARRAY_SIZE_INT \
+                                        parameter WORD_LENGTH = 8, \
                                         )
