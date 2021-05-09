@@ -33,11 +33,16 @@
 use File::Basename;
 my $dirname = dirname(__FILE__);
 
-use File::Copy qw(move);
+use File::Copy qw(copy move);
+use File::Copy::Recursive qw(dircopy); # In case this causes an error, run [ sudo apt-get install libfile-copy-recursive-perl ]
+use File::Find;
 
 # Golobal variables
 $debug_enable = 0;
 $default_template_dir = "$dirname/template_dir";
+$default_proj_name = "ip_example_name";
+$default_top_name = $default_proj_name."_top"; # This is the name of the module tops which will be used throughout the template
+$default_env_var = uc $default_proj_name."_home"; # This is the environment variable which will be used to point to this IP's install path
 
 # Debug subroutines
 sub debug
@@ -46,6 +51,19 @@ sub debug
     {
         print "$_[0]\n";
     }
+}
+
+# Print Defaults
+sub print_defaults
+{
+    debug( "-----------------" );
+    debug( "Printing Defaults" );
+    debug( "-----------------" );
+    debug( "debug_enable : $debug_enable" );
+    debug( "default_template_dir : $default_template_dir" );
+    debug( "default_proj_name : $default_proj_name" );
+    debug( "default_top_name : $default_top_name" );
+    debug( "default_env_var : $default_env_var" );
 }
 
 # New lilne print
@@ -74,6 +92,35 @@ sub print_example
     print "perl ip_gen.pl <switch>\n";
 }
 
+# Read file subroutine
+sub read_file
+{
+    # TODO - Not sure how this part of code works
+    # https://perlmaven.com/how-to-replace-a-string-in-a-file-with-perl
+    my ($filename) = @_;
+
+    open my $in, '<:encoding(UTF-8)', $filename or die "S - Error. Could not read the file.";
+    local $/ = undef;
+    my $all = <$in>;
+    close $in;
+
+    return $all;
+}
+
+# Write file subroutine
+sub write_file
+{
+    # TODO - Not sure how this part of code works
+    # https://perlmaven.com/how-to-replace-a-string-in-a-file-with-perl
+    my ($filename, $content) = @_;
+
+    open my $out, '>:encoding(UTF-8)>', $filename or die "S - Error. Could not open file ( $filename ) for writing.";
+    print $out $content;
+    close $out;
+
+    return;
+}
+
 # Main subroutine
 sub main
 {
@@ -91,6 +138,9 @@ sub main
     {
         debug( "Error. The template directory does not exist : $default_template_dir" );
     }
+    debug();
+    print_defaults();
+    debug();
     
     # Intro
     printn( "---------------------------------------------" );
@@ -109,7 +159,7 @@ sub main
 
     if ( -e $destination_dir and -d $destination_dir )
     {
-        printn( "S - The directory exists. Moving to next step." );
+        printn( "S - The directory exists ( $destination_dir ). Moving to next step." );
     }else
     {
         $failed = 1;
@@ -128,7 +178,7 @@ sub main
 
             if ( -e $destination_dir and -d $destination_dir )
             {
-                printn( "S - The directory exists. Moving to next step." );
+                printn( "S - The directory exists ( $destination_dir ). Moving to next step." );
                 $failed = 0;
                 last;
             }            
@@ -140,8 +190,116 @@ sub main
         }
     }
     
-    # Copying the template_dir structure into a new path
+    # Registering the project name
+    print "S - Enter the name of the project or the IP ( eg. ip_ahb3_ms, viking7 ) : ";
+    $proj_name = <STDIN>;
+    chomp($proj_name);
+    if ( $proj_name eq "" )
+    {
+        printn( "S - A valid name was not provided, so the default name is being pocked : $default_proj_name" );
+        $proj_name = $default_proj_name;
+    }
 
+    # Create a project directory
+    $proj_path = "$destination_dir/$proj_name";
+    debug( "Project path : $proj_path" );
+    if ( -d $proj_path )
+    {
+        printn( "S - Error. Project directory already exists. Script is exiting." );
+        exit;
+    }
+    else
+    {
+        if ( mkdir $proj_path )
+        {
+            printn( "S - New project directory created." );
+        }
+        else
+        {
+            printn( "S - Error. Project directory creation failed. Script exiting." );
+            exit;
+        }
+    }
+
+    # Copying the template_dir structure into a new path
+    $dst = "$proj_path/";
+    $src = "$default_template_dir";
+
+    if ( dircopy( $src, $dst ) )
+    {
+        printn( "S - Copied all the template files into the desination project directory." );
+    }
+    else
+    {
+        printn( "S - Error. Failed to copy the template files into the destination directory. Exiting script." );
+    }
+
+    # Go through every file and first rename the files with the project name 
+    # In the template files, the ip_amba_apb_slave has been used as the project/IP name
+    # So text replacement will be done for files with have a substring matching this
+    @files = `find $dst/*`;
+    debug( "Renaming files --------\n" );
+    for(@files)
+    {
+        chomp($_);
+        debug( "File/Directory Traversed : $_" );
+        if ( -e $_ and ( not ( -d $_ ) ) )
+        {
+            $fullfilepath = $_;
+            chomp($fullfilepath);
+            $basename = `basename $_`;
+            chomp($basename);
+            $fullpath = `realpath $_`;
+            chomp($fullpath);
+            debug( "Basename/Fullpath of file : $basename ( $fullpath )" );
+
+            # Check if the filename has a substring match
+            $substr = "ip_amba_apb_slave";
+            $match = $basename;
+            $match =~ m/ip_amba_apb_slave/;
+            
+            if ( not ( $& eq "" )  )
+            {
+                debug( "Substring ( $substr ) matched. Replacing the file with a new name now. ( $` : $& : $' )" );
+                # Filename is a match. Now move the file and rename it.
+                $newname = $proj_name.$';
+                $newpath = `dirname $fullpath`;
+                chomp($newpath);
+                $newpath = $newpath."/".$newname;
+                printn( "S - Creating new file ( $newname ). Full path : $newpath" );
+
+                $temp = `mv $fullfilepath $newpath`;
+
+                if ( -e $newpath and ( not ( -d $newpath ) ) )
+                {
+                    debug( "File successfully renamed." );
+                }
+                else
+                {
+                    printn( "S - Error. Failed to rename the file. Script is exiting." );
+                }
+            }
+            debug();
+        }
+    }
+    
+    # Go through every file and 
+    @files = `find $dst/*`;
+    debug( "String substitutions in files --------\n" );
+    for(@files)
+    {
+        chomp($_);
+        if ( -e $_ and ( not ( -d $_ ) ) )
+        {
+            debug( "File Traversed : $_" );
+
+            # Text replacement code
+            my $data = read_file($_);
+            $data =~ s/ip_amba_apb_slave/$proj_name/g;
+            debug( "$data" );
+            #write_file($_, $data); TODO : Code is pending from here
+        }
+    }
 }
 
 # ----
