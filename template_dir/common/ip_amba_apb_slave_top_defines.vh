@@ -36,3 +36,35 @@
 
 `define SOMETHING_width         4
 */
+
+`define debug( x ) \
+    `ifdef ip_amba_apb_slave_debug_en \
+        $display( $sformat( "ip_amba_apb_slave : %s", x ) ); \
+    `endif
+
+`define ip_amba_apb_slave_dump \
+    `ifdef ip_amba_apb_slave_dump_en \
+        initial begin \
+            $display( "ip_amba_apb_slave : VCD Dump Generation Is Enabled ( ip_amba_apb_slave.vcd )" ); \
+            $dumpfile( "ip_amba_apb_slave.vcd" ); \
+            $dumpvard( 0, ip_amba_apb_slave_top ); \
+        end \
+    `elsif ip_amba_apb_slave_tb_dump_en \
+        initial begin \
+            $display( "ip_amba_apb_slave_tb : VCD Dump Generation Is Enabled ( ip_amba_apb_slave_tb.vcd )" ); \
+            $dumpfile( "ip_amba_apb_slave_tb.vcd" ); \
+            $dumpvard( 0, ip_amba_apb_slave_tb_top ); \
+        end \
+    `endif
+
+// ip_amba_apb_slave_check_en :    
+//
+// Use define this to write an assertion or a simple
+// functionality check for basic testing. If
+// enabled from the make/run script, the checks
+// will be run.
+
+// ip_amba_apb_slave_fa_en :    
+//
+// Use this define to write formal assertion and then
+// run them using the make switch

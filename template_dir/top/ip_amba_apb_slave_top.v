@@ -36,8 +36,9 @@
 // ++++++++++++++++++
 // Module Description
 // ++++++++++++++++++
-// RTL description goes here.
-// ++++++++++++++++++
+//
+// 1. 
+// 2. 
 
 module ip_amba_apb_slave_top `IP_AMBA_APB_SLAVE_PARAM_DECL (  
 
@@ -49,6 +50,11 @@ module ip_amba_apb_slave_top `IP_AMBA_APB_SLAVE_PARAM_DECL (
 
 );
 
-    // Code
+    
+    // ---------------
+    // Dump Generation
+    // ---------------
+    
+    `ip_amba_apb_slave_dump
 
 endmodule

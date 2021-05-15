@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------------
  * Module Name  :
- * Date Created : 10:27:43 IS, 14 January, 2020 [ Tuesday ] 
+ * Date Created : 18:53:44 IST, 15 May, 2021 [ Saturday ]
  *
  * Author       : pxvi
  * Description  :
@@ -8,7 +8,7 @@
 
    MIT License
 
-   Copyright (c) 2020 k-sva
+   Copyright (c) 2021 k-sva
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the Software), to deal
@@ -30,9 +30,24 @@
 
  * ----------------------------------------------------------------------------------- */
 
-// ----------------------
-// Declaration Parameters
-// ----------------------
-`define IP_AMBA_APB_SLAVE_PARAM_DECL #( \
-                                        parameter WORD_LENGTH = 8 \
-                                        )
+`include "ip_amba_apb_slave_top.v"
+
+module ip_amba_apb_slave_tb_top;
+
+    // Wires / Registers
+
+
+    // IP Instantiation
+    
+
+    // Dedicated Testbench Core / Code
+    
+
+    // ---------------
+    // Dump Generation
+    // ---------------
+    
+    `ip_amba_apb_slave_dump
+    
+
+endmodule

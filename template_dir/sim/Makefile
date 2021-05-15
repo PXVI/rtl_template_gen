@@ -36,11 +36,11 @@
 
 TESTNAME?=NO_TEST
 
-FILENAME?=./../top/ip_amba_apb_slave_top.v
+#FILENAME?=./../top/ip_amba_apb_slave_top.v
+#TOP_NAME?=ip_amba_apb_slave_top
 
 COMPILE_FILELIST?=./comp_filelist/compile_filelist.list
 
-TOP_NAME?=ip_amba_apb_slave_top
 
 ifdef $(DO_FILE)
 DO_CMD= -do $(DO_FILE)
@@ -50,6 +50,55 @@ endif
 
 LINT?=0
 WALL?=0
+DEBUG?=0
+DUMP?=0
+#LAN?=V
+ASSERT?=0
+CHECK?=0
+TB?=0
+
+DEBUG_ARGS?=
+CHECK_ARGS?=
+ASSERT_ARGS?=
+DUMP_ARGS?=
+
+# TB = 0 ( Simple RTL top will be simulated )
+# TB = 1 ( Testbench top will b simulated and by default SV will be enabled )
+ifeq ($(TB),1)
+LAN?=SV
+FILENAME?=./../top/ip_amba_apb_slave_tb_top.sv
+TOP_NAME?=ip_amba_apb_slave_tb_top
+else
+LAN?=V
+FILENAME?=./../top/ip_amba_apb_slave_top.v
+TOP_NAME?=ip_amba_apb_slave_top
+endif
+
+ifeq ($(LAN),SV)
+LAN_RTL_ARGS=sv
+else
+LAN_RTL_ARGS=v
+endif
+
+ifeq ($(DEBUG),1)
+DEBUG_ARGS=+define+ip_amba_apb_slave_debug_en
+endif
+
+ifeq ($(ASSERT),1)
+ASSERT_ARGS=+define+ip_amba_apb_slave_fa_en
+endif
+
+ifeq ($(CHECK),1)
+CHECK_ARGS=+define+ip_amba_apb_slave_check_en
+endif
+
+ifeq ($(DUMP),1)
+ifeq ($(TB),1)
+DUMP_ARGS=+define+ip_amba_apb_slave_tb_dump_en
+else
+DUMP_ARGS=+define+ip_amba_apb_slave_dump_en
+endif
+endif
 
 ifeq ($(WALL),1)
 WALL_ARG=-Wall
@@ -87,10 +136,14 @@ comp:
 	-work ./work \
 	+acc \
 	-l compile.log \
-	-sv \
+	-$(LAN_RTL_ARGS) \
 	-vopt \
 	-writetoplevels questa.tops \
 	$(FILENAME) \
+	$(DEBUG_ARGS) \
+	$(ASSERT_ARGS) \
+	$(CHECK_ARGS) \
+	$(DUMP_ARGS) \
 	-f $(COMPILE_FILELIST);
 	
 
