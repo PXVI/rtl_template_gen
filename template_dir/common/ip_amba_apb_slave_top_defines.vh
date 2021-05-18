@@ -47,13 +47,13 @@
         initial begin \
             $display( "ip_amba_apb_slave : VCD Dump Generation Is Enabled ( ip_amba_apb_slave.vcd )" ); \
             $dumpfile( "ip_amba_apb_slave.vcd" ); \
-            $dumpvard( 0, ip_amba_apb_slave_top ); \
+            $dumpvars( 0, ip_amba_apb_slave_top ); \
         end \
     `elsif ip_amba_apb_slave_tb_dump_en \
         initial begin \
             $display( "ip_amba_apb_slave_tb : VCD Dump Generation Is Enabled ( ip_amba_apb_slave_tb.vcd )" ); \
             $dumpfile( "ip_amba_apb_slave_tb.vcd" ); \
-            $dumpvard( 0, ip_amba_apb_slave_tb_top ); \
+            $dumpvars( 0, ip_amba_apb_slave_tb_top ); \
         end \
     `endif
 
