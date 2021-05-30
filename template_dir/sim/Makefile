@@ -66,11 +66,11 @@ DUMP_ARGS?=
 # TB = 1 ( Testbench top will b simulated and by default SV will be enabled )
 ifeq ($(TB),1)
 LAN?=SV
-FILENAME?=./../top/ip_amba_apb_slave_tb_top.sv
+FILENAME?=./../top/tb/ip_amba_apb_slave_tb_top.sv
 TOP_NAME?=ip_amba_apb_slave_tb_top
 else
 LAN?=V
-FILENAME?=./../top/ip_amba_apb_slave_top.v
+FILENAME?=./../top/rtl/ip_amba_apb_slave_top.v
 TOP_NAME?=ip_amba_apb_slave_top
 endif
 
@@ -211,3 +211,20 @@ lint:
 	$(WALL_ARG) \
 	--lint-only;
 	@echo "Linting Complete!"
+
+# Make a RTL release directory with RTL &
+# build scripts
+# --------------------------------------------
+release: all
+	make clean
+	@echo "Compilation/simulation was a clean run on the rtl. Moving onto release package creation."
+	./rtl_release.sh
+	@echo "Release RTL package prepared."
+
+# No comp/sim version of the release
+# --------------------------------------------
+release_nocomp:
+	@echo "Skipping basic compilation and other checks. Directly moving onto release preperation."
+	./rtl_release.sh
+	@echo "Release RTL package prepared."
+

@@ -40,6 +40,7 @@
 //+incdir+$UVM_PATH/
 
 +incdir+$IP_AMBA_APB_SLAVE_HOME/common/
-+incdir+$IP_AMBA_APB_SLAVE_HOME/top/
++incdir+$IP_AMBA_APB_SLAVE_HOME/top/rtl
++incdir+$IP_AMBA_APB_SLAVE_HOME/top/tb
 
 // User Specific Defines
