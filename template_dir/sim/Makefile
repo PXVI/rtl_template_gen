@@ -228,3 +228,33 @@ release_nocomp:
 	./rtl_release.sh
 	@echo "Release RTL package prepared."
 
+# Help label to print the relevant details 
+# of the makefile
+# --------------------------------------------
+help:
+	@echo "----------------------------------"
+	@echo "Usage : make <label> <arg1> <arg2>"
+	@echo "----------------------------------"
+	@echo ""
+	@echo "List of avialable labels -"
+	@echo ""
+	@echo "all             : Runs a simple Questasim simulation ( after the neccessary pre-reusite steps )"
+	@echo "clean           : Removes all the simulation/compilation related files after a run"
+	@echo "lint            : Performs a verilator based lilnt on the verilog based top module"
+	@echo "wave            : Generates a .wlf file from a .vcd from the current directory"
+	@echo "logs            : Moves all the generated logs into a new directory"
+	@echo "qv              : Runs a simple qverilog command on the verilog top module"
+	@echo "qvc             : Performs a clean and qverilog run on the verilog top module"
+	@echo "release         : Creates a release directory after a sanity simulation with the module and the neccessary files for quick export"
+	@echo "release_nocomp  : Create a release of the verilog RTL without running a sanity simulation"
+	@echo ""
+	@echo "List of switches -"
+	@echo ""
+	@echo "LINT            : Enable lint"
+	@echo "WALL            : Disable lint warnings"
+	@echo "DEBUG           : Enable debug defines and run time args"
+	@echo "DUMP            : Generate a simulation dump"
+	@echo "ASSERT          : Enable assertions"
+	@echo "CHECK           : Enable RTL functional checker blocks"
+	@echo "TB              : Enable a testbench and run it's top as the simulation block"
+	@echo "LAN             : ( V / SV ) Run simulation with Verilog syntax or SystemVerilog syntax"
