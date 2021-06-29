@@ -48,6 +48,5 @@ module ip_amba_apb_slave_tb_top;
     // ---------------
     
     `ip_amba_apb_slave_dump
-    
 
 endmodule

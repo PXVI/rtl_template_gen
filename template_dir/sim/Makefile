@@ -39,14 +39,25 @@ TESTNAME?=NO_TEST
 #FILENAME?=./../top/ip_amba_apb_slave_top.v
 #TOP_NAME?=ip_amba_apb_slave_top
 
+ifeq ($(SIM),IV)
+COMPILE_FILELIST?=./comp_filelist/compile_filelist.ivlist
+else
 COMPILE_FILELIST?=./comp_filelist/compile_filelist.list
-
+endif
 
 ifdef $(DO_FILE)
 DO_CMD= -do $(DO_FILE)
 else
 DO_CMD= -do "run -all; quit -f"
 endif
+
+# --------------------------------------
+# Select the supported simulator ( SIM )
+# --------------------------------------
+# QuestaSim - Q
+# Icarus Verilog - IV
+# Verilator - VL
+SIM?=IV
 
 LINT?=0
 WALL?=0
@@ -111,26 +122,40 @@ endif
 # **********************
 
 ifeq ($(LINT),1)
-all : clean lint lib comp opt sim
+all : cmd_disp clean lint lib comp opt sim
 else
-all : clean lib comp opt sim
+ifeq ($(SIM),IV)
+all : cmd_disp clean iv_comp iv_sim
+else
+all : cmd_disp clean lib comp opt sim
+endif
 endif
 
-comp_only : clean lib comp
+comp_only : cmd_dis clean lib comp
 
+cmd_disp:
+	@echo "# "
+	@echo "# Simulator : $(SIM)"
+	@echo "# Compile filelist : $(COMPILE_FILELIST)"
+	@echo "# Top File : $(FILENAME)"
+	@echo "# "
+
+# -----------------------------------------
 # To Clean Redundant Files and Other Things
-# --------------------------------------------
+# -----------------------------------------
 clean:
-	@echo "Running Clean Command...";
+	@echo "# Running Clean Command...";
 	@rm -rf *.log *.vcd *.wlf;
 	@rm -rf work questa.tops transcript;
 	@rm -rf ./debug;
 	@rm -rf ./obj_dir;
+	@rm -rf ./vvp_out;
 
+# -----------
 # Compilation
-# --------------------------------------------
+# -----------
 comp:
-	@echo "Compiling the files...";
+	@echo "# Compiling the files...";
 	@vlog \
 	-64 \
 	-work ./work \
@@ -147,10 +172,11 @@ comp:
 	-f $(COMPILE_FILELIST);
 	
 
+# ----------
 # Simulation
-# --------------------------------------------
+# ----------
 sim:
-	@echo "Starting Simulation...";
+	@echo "# Starting Simulation...";
 	@vsim \
 	top_opt \
 	-wlf vsim.wlf \
@@ -161,100 +187,128 @@ sim:
 	+define+UVM_NO_DPI \
 	+UVM_TESTNAME=$(TESTNAME);
 
+# ------------------
 # Library Generation
-# --------------------------------------------
+# ------------------
 lib:
-	@echo "Making Work Directory...";
+	@echo "# Making Work Directory...";
 	@vlib work;
 
+# --------------------
 # For the Optimization
-# --------------------------------------------
+# --------------------
 opt:
-	@echo "Running Optimization...";
+	@echo "# Running Optimization...";
 	@vopt \
 	+acc \
 	$(TOP_NAME) \
 	-o top_opt;
 
+# ---------------------
 # Generate WLF from VCD
-# --------------------------------------------
+# ---------------------
 wave:
-	@echo "Converting dump.vcd file to dump.wlf...";
-	@echo "Removing all the redundant dumps...";
-	@echo "Complete!";
+	@echo "# Converting dump.vcd file to dump.wlf...";
+	@echo "# Removing all the redundant dumps...";
+	@echo "# Complete!";
 	@vcd2wlf dump.vcd dump.wlf;
 	@rm -rf dump.vcd;
 
+# -----------------------------
 # Move the Geberated Debug Logs
-# --------------------------------------------
+# -----------------------------
 logs:
-	@echo "Creating a new ./debug directory...";
+	@echo "# Creating a new ./debug directory...";
 	@mkdir ./debug;
 	@mv *debug.log ./debug/;
-	@echo "Moved all the logs successfully.";
+	@echo "# Moved all the logs successfully.";
 
+# ------------------------
 # For the Qverilog Command
-# --------------------------------------------
+# ------------------------
 qv:
 	qverilog \
 	$(FILENAME);
 
 qvc: clean qv
 
+# ------------------------------
 # Running a Lint using Verilator
-# --------------------------------------------
+# ------------------------------
 lint:
-	@echo "Linting the design..."
+	@echo "# Linting the design..."
 	@verilator \
 	-f $(COMPILE_FILELIST) \
 	$(FILENAME) \
 	$(WALL_ARG) \
 	--lint-only;
-	@echo "Linting Complete!"
+	@echo "# Linting Complete!"
 
+# ------------------
+# Icarus Compilation
+# ------------------
+iv_comp:
+	@echo "# Compiling verilog/systemverilog files using icarus..."
+	@iverilog -o vvp_out \
+	-c $(COMPILE_FILELIST) \
+	$(FILENAME)
+	@echo "# Compilation complete"
+
+# -----------------
+# Icarus Simulation
+# -----------------
+iv_sim:
+	@echo "# Running the icarun generated vvp file..."
+	@echo "# ----------------------------------------"
+	@echo ""
+	@vvp vvp_out
+
+# ---------------------------------------
 # Make a RTL release directory with RTL &
 # build scripts
-# --------------------------------------------
+# ---------------------------------------
 release: all
 	make clean
-	@echo "Compilation/simulation was a clean run on the rtl. Moving onto release package creation."
+	@echo "# Compilation/simulation was a clean run on the rtl. Moving onto release package creation."
 	./rtl_release.sh
-	@echo "Release RTL package prepared."
+	@echo "# Release RTL package prepared."
 
+# ----------------------------------
 # No comp/sim version of the release
-# --------------------------------------------
+# ----------------------------------
 release_nocomp:
-	@echo "Skipping basic compilation and other checks. Directly moving onto release preperation."
+	@echo "# Skipping basic compilation and other checks. Directly moving onto release preperation."
 	./rtl_release.sh
-	@echo "Release RTL package prepared."
+	@echo "# Release RTL package prepared."
 
+# ----------------------------------------
 # Help label to print the relevant details 
 # of the makefile
-# --------------------------------------------
+# ----------------------------------------
 help:
-	@echo "----------------------------------"
-	@echo "Usage : make <label> <arg1> <arg2>"
-	@echo "----------------------------------"
-	@echo ""
-	@echo "List of avialable labels -"
-	@echo ""
-	@echo "all             : Runs a simple Questasim simulation ( after the neccessary pre-reusite steps )"
-	@echo "clean           : Removes all the simulation/compilation related files after a run"
-	@echo "lint            : Performs a verilator based lilnt on the verilog based top module"
-	@echo "wave            : Generates a .wlf file from a .vcd from the current directory"
-	@echo "logs            : Moves all the generated logs into a new directory"
-	@echo "qv              : Runs a simple qverilog command on the verilog top module"
-	@echo "qvc             : Performs a clean and qverilog run on the verilog top module"
-	@echo "release         : Creates a release directory after a sanity simulation with the module and the neccessary files for quick export"
-	@echo "release_nocomp  : Create a release of the verilog RTL without running a sanity simulation"
-	@echo ""
-	@echo "List of switches -"
-	@echo ""
-	@echo "LINT            : Enable lint"
-	@echo "WALL            : Disable lint warnings"
-	@echo "DEBUG           : Enable debug defines and run time args"
-	@echo "DUMP            : Generate a simulation dump"
-	@echo "ASSERT          : Enable assertions"
-	@echo "CHECK           : Enable RTL functional checker blocks"
-	@echo "TB              : Enable a testbench and run it's top as the simulation block"
-	@echo "LAN             : ( V / SV ) Run simulation with Verilog syntax or SystemVerilog syntax"
+	@echo "# ----------------------------------"
+	@echo "# Usage : make <label> <arg1> <arg2>"
+	@echo "# ----------------------------------"
+	@echo "# "
+	@echo "# List of avialable labels -"
+	@echo "# "
+	@echo "# all             : Runs a simple Questasim simulation ( after the neccessary pre-reusite steps )"
+	@echo "# clean           : Removes all the simulation/compilation related files after a run"
+	@echo "# lint            : Performs a verilator based lilnt on the verilog based top module"
+	@echo "# wave            : Generates a .wlf file from a .vcd from the current directory"
+	@echo "# logs            : Moves all the generated logs into a new directory"
+	@echo "# qv              : Runs a simple qverilog command on the verilog top module"
+	@echo "# qvc             : Performs a clean and qverilog run on the verilog top module"
+	@echo "# release         : Creates a release directory after a sanity simulation with the module and the neccessary files for quick export"
+	@echo "# release_nocomp  : Create a release of the verilog RTL without running a sanity simulation"
+	@echo "# "
+	@echo "# List of switches -"
+	@echo "# "
+	@echo "# LINT            : Enable lint"
+	@echo "# WALL            : Disable lint warnings"
+	@echo "# DEBUG           : Enable debug defines and run time args"
+	@echo "# DUMP            : Generate a simulation dump"
+	@echo "# ASSERT          : Enable assertions"
+	@echo "# CHECK           : Enable RTL functional checker blocks"
+	@echo "# TB              : Enable a testbench and run it's top as the simulation block"
+	@echo "# LAN             : ( V / SV ) Run simulation with Verilog syntax or SystemVerilog syntax"

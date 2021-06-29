@@ -1,0 +1,3 @@
++incdir+${IP_AMBA_APB_SLAVE_HOME}/common
++incdir+${IP_AMBA_APB_SLAVE_HOME}/top/rtl
++incdir+${IP_AMBA_APB_SLAVE_HOME}/top/tb
