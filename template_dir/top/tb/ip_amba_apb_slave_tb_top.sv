@@ -32,7 +32,13 @@
 
 `include "ip_amba_apb_slave_top.v"
 
-module ip_amba_apb_slave_tb_top;
+module ip_amba_apb_slave_tb_top(   
+    `ifdef VERILATOR
+            input ip_amba_apb_slave_tb_top_clock
+    `endif
+);
+
+    /* verilator lint_off MULTITOP */
 
     // Wires / Registers
 
@@ -48,5 +54,18 @@ module ip_amba_apb_slave_tb_top;
     // ---------------
     
     `ip_amba_apb_slave_dump
+    
+    `ifdef VERILATOR
+        always@( posedge ip_amba_apb_slave_tb_top_clock )
+        begin
+            $display( "ip_amba_apb_slave_tb_top : Temporary Code. Disable/Comment this part after running the initial code." );
+            $finish;
+        end
+    `endif
+
+    initial
+    begin
+        $display( "Testbench is working" );
+    end
 
 endmodule

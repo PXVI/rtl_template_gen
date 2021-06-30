@@ -42,6 +42,12 @@
 
 module ip_amba_apb_slave_top `IP_AMBA_APB_SLAVE_PARAM_DECL (  
 
+    /* verilator lint_off MULTITOP */
+
+    `ifdef VERILATOR
+        input ip_amba_apb_slave_top_clock
+);
+    `else
     // Global Inputs
     
     // Inputs
@@ -49,8 +55,16 @@ module ip_amba_apb_slave_top `IP_AMBA_APB_SLAVE_PARAM_DECL (
     // Outputs
 
 );
+    `endif
 
-    
+    `ifdef VERILATOR
+        always@( posedge ip_amba_apb_slave_top_clock )
+        begin
+            $display( "ip_amba_apb_slave_top : Temporary Code. Disable/Comment this part after running the initial code." );
+            $finish;
+        end
+    `endif
+        
     // ---------------
     // Dump Generation
     // ---------------

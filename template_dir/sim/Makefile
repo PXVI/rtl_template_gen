@@ -85,6 +85,8 @@ FILENAME?=./../top/rtl/ip_amba_apb_slave_top.v
 TOP_NAME?=ip_amba_apb_slave_top
 endif
 
+VLFILENAME?=V$(FILENAME)
+
 ifeq ($(LAN),SV)
 LAN_RTL_ARGS=sv
 else
@@ -124,6 +126,9 @@ endif
 ifeq ($(LINT),1)
 all : cmd_disp clean lint lib comp opt sim
 else
+ifeq ($(SIM),VL)
+all : cmd_disp clean vl_comp vl_sim
+endif
 ifeq ($(SIM),IV)
 all : cmd_disp clean iv_comp iv_sim
 else
@@ -270,7 +275,7 @@ iv_sim:
 release: all
 	make clean
 	@echo "# Compilation/simulation was a clean run on the rtl. Moving onto release package creation."
-	./rtl_release.sh
+	./scripts/rtl_release.sh
 	@echo "# Release RTL package prepared."
 
 # ----------------------------------
@@ -280,6 +285,34 @@ release_nocomp:
 	@echo "# Skipping basic compilation and other checks. Directly moving onto release preperation."
 	./rtl_release.sh
 	@echo "# Release RTL package prepared."
+
+# --------------------------------------------------
+# Create the neccessary Verilator .cpp template file
+# --------------------------------------------------
+vl_res:
+	@echo "# Removing and re-creating the sim_main.cpp for verilator"
+	@rm -rf sim_main.cpp
+	@./scripts/gen_sim_main.sh $(TOP_NAME);
+	@echo "# sim_main.cpp file generated for the top ( $(TOP_NAME) )!"
+
+# -------------------------
+# Verilate the design files
+# -------------------------
+vl_comp:
+	@echo "# Verilating..."
+	@verilator -Wall --cc --exe --build sim_main.cpp -f $(COMPILE_FILELIST) $(FILENAME);
+
+# ------------------------------
+# Run the verilated design files
+# ------------------------------
+vl_sim:
+	@echo "#----------------------------"
+	@echo "# Running verilated design..."
+	@echo "# ---------------------------"
+	@echo ""
+	@obj_dir/V$(TOP_NAME);
+	@echo ""
+	@echo "# ---------------------------"
 
 # ----------------------------------------
 # Help label to print the relevant details 
@@ -304,6 +337,7 @@ help:
 	@echo "# "
 	@echo "# List of switches -"
 	@echo "# "
+	@echo "# SIM			 : Select the simulator with which to run the simulation ( Q, IV, VL )"
 	@echo "# LINT            : Enable lint"
 	@echo "# WALL            : Disable lint warnings"
 	@echo "# DEBUG           : Enable debug defines and run time args"
