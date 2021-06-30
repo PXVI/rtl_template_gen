@@ -128,11 +128,12 @@ all : cmd_disp clean lint lib comp opt sim
 else
 ifeq ($(SIM),VL)
 all : cmd_disp clean vl_comp vl_sim
-endif
+else
 ifeq ($(SIM),IV)
 all : cmd_disp clean iv_comp iv_sim
 else
 all : cmd_disp clean lib comp opt sim
+endif
 endif
 endif
 
