@@ -67,6 +67,7 @@ DUMP?=0
 ASSERT?=0
 CHECK?=0
 TB?=0
+SIM_DETAILS=
 
 DEBUG_ARGS?=
 CHECK_ARGS?=
@@ -124,27 +125,39 @@ endif
 # **********************
 
 ifeq ($(LINT),1)
-all : cmd_disp clean lint lib comp opt sim
+before_comp: cmd_disp clean lint
 else
-ifeq ($(SIM),VL)
-all : cmd_disp clean vl_comp vl_sim
-else
+before_comp: cmd_disp clean
+endif
+
+#.PHONY :
+#	@echo "# The supplied make command is not supported. Use make help to look at the supported labels."
+
+ifeq ($(SIM),Q)
+all : before_comp lib comp opt sim
+endif
 ifeq ($(SIM),IV)
-all : cmd_disp clean iv_comp iv_sim
-else
-all : cmd_disp clean lib comp opt sim
+all : before_comp iv_comp iv_sim
 endif
-endif
+ifeq ($(SIM),VL)
+all : before_comp vl_comp vl_sim
 endif
 
 comp_only : cmd_dis clean lib comp
 
 cmd_disp:
-	@echo "# "
+	@echo "# ------------------"
+	@echo "# Script Run Details"
+	@echo "# ------------------"
 	@echo "# Simulator : $(SIM)"
 	@echo "# Compile filelist : $(COMPILE_FILELIST)"
 	@echo "# Top File : $(FILENAME)"
-	@echo "# "
+	@echo "# Lint Enabled : $(LINT)"
+	@echo "# Testbench Enabled : $(TB)"
+	@echo "# Assertions Enabled : $(ASSERT)"
+	@echo "# Debug Enabled : $(DEBUG)"
+	@echo "# DUMP Enabled : $(DUMP)"
+	@echo ""
 
 # -----------------------------------------
 # To Clean Redundant Files and Other Things
@@ -255,7 +268,7 @@ lint:
 # ------------------
 iv_comp:
 	@echo "# Compiling verilog/systemverilog files using icarus..."
-	@iverilog -o vvp_out \
+	iverilog -o vvp_out \
 	-c $(COMPILE_FILELIST) \
 	$(FILENAME)
 	@echo "# Compilation complete"
