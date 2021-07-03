@@ -46,6 +46,7 @@ enableTB=0 # -tb
 enableQuesta=1 # -qs
 enableVerilator=0 # -vl
 enableIcarus=0 # -iv
+enableVLWrap=0 # --vlwrap
 
 enableBuild=0 # --build
 enableClean=0 # --clean
@@ -57,6 +58,7 @@ topName="ip_amba_apb_slave_top"
 vFileName="V${topName}"
 simLang="Q"
 SVLanguageArgs="-v"
+verilatorWallArg=""
 
 # Subroutines
 eco(){
@@ -117,6 +119,15 @@ lb_cmd_disp(){
     eco "Assertions Enabled : $enableAssert"
     eco "Debug Enabled : $enableDebug"
     eco "DUMP Enabled : $enableDump"
+    if [ $enableQuesta -eq 1 ]
+    then
+        eco "Options : More QS Options"
+    elif [ $enableVerilator -eq 1 ]
+    then
+        eco "Create New CPP Wrapper : $enableVLWrap"
+    else
+        eco "Options : More IV Options"
+    fi
     eco ""
 }
 
@@ -166,6 +177,97 @@ lb_qs_sim(){
 	-c;
 }
 
+lb_qs_wave(){
+    eco "Converting dump.vcd file to dump.wlf...";
+    eco "Removing all the redundant dumps...";
+    eco "Complete!";
+    vcd2wlf dump.vcd dump.wlf;
+    rm -rf dump.vcd;
+}
+
+lb_qs_logs(){
+    eco "Creating a new ./debug directory...";
+    mkdir ./debug;
+    mv *debug.log ./debug/;
+    eco "Moved all the logs successfully.";
+}
+
+lb_qs_qv(){
+	qverilog $fileName;
+}
+
+lb_qs_qvc(){
+    lb_qs_qv
+}
+
+# Linting Only
+lb_vl_lint(){
+    eco "Linting the design..."
+    verilator \
+	-f $compileFilelist \
+	$fileName \
+	-Wall \
+	--lint-only;
+	eco "Linting Complete!"
+}
+
+# Icarus Verilog
+lb_iv_comp(){
+	eco "Compiling verilog/systemverilog files using icarus..."
+	iverilog -o vvp_out \
+	-c $compileFilelist \
+	$fileName
+	eco "Compilation complete"
+}
+
+lb_iv_sim(){
+	eco "Running the icarun generated vvp file..."
+	eco "----------------------------------------"
+	eco ""
+	vvp vvp_out
+}
+
+# Verilator
+lb_vl_res(){
+
+    # Generate a simple cpp wrapper for the verilated design
+
+    eco "Removing and re-creating the sim_main.cpp for verilator"
+    rm -rf sim_main.cpp
+    ./scripts/gen_sim_main.sh $topName;
+    eco "sim_main.cpp file generated for the top ( $topName )!"
+}
+
+lb_vl_comp(){
+    eco "Verilating..."
+    verilator -Wall --cc --exe --build sim_main.cpp -f $compileFilelist $fileName;
+}
+
+lb_vl_sim(){
+    eco "----------------------------"
+    eco "Running verilated design..."
+    eco "---------------------------"
+    eco ""
+    obj_dir/V${topName};
+    eco ""
+    eco "---------------------------"
+}
+
+# Miscelleneous
+lb_release_nocomp(){
+	make clean
+	eco "Compilation/simulation was a clean run on the rtl. Moving onto release package creation."
+	./scripts/rtl_release.sh
+	eco "Release RTL package prepared."
+}
+
+lb_release(){
+	make clean
+	eco "Compilation/simulation was a clean run on the rtl. Moving onto release package creation."
+	./scripts/rtl_release.sh
+	eco "Release RTL package prepared."
+}
+
 # Execute Build
 run_build(){
 
@@ -181,6 +283,18 @@ run_build(){
         lb_qs_comp
         lb_qs_opt
         lb_qs_sim
+    fi
+    
+    if [ $enableVerilator -eq 1 ]
+    then
+        lb_vl_comp
+        lb_vl_sim
+    fi
+    
+    if [ $enableIcarus -eq 1 ]
+    then
+        lb_iv_comp
+        lb_iv_sim
     fi
 }
 
@@ -199,6 +313,7 @@ check_switch(){
             "-l")       enableLint=1;;
             "-ck")      enableCheck=1;;
             "-tb")      enableTB=1;;
+            "--vlwrap") enableVLWrap=1;;
             "-cf")      enableCustomCompileFilelist=1
                         ntemp=`expr $ntemp + 1`
                         shift;;
@@ -226,7 +341,8 @@ check_switch(){
                         enableIcarus=0;;
             "-iv")      enableIcarus=1
                         enableQuesta=0
-                        enableVerilator=0;;
+                        enableVerilator=0
+                        compileFilelist="./comp_filelist/compile_filelist.ivlist";;
             "-h")       show_help
                         exit 1;;
             "--help")   show_help
@@ -257,6 +373,11 @@ check_switch(){
     if [ $enableClean -eq 1 ]
     then
         lb_clean
+    fi
+
+    if [ $enableVLWrap -eq 1 ]
+    then
+        lb_vl_res       
     fi
 
     if [ $enableBuild -eq 1 ]
