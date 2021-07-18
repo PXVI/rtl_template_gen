@@ -72,7 +72,7 @@ show_help(){
     eco "--------------------------"
     eco "Syntax : run_script [arg1] [arg2] ..."
 
-    eco "Arguments"
+    eco "Control Switches"
     eco ""
     eco "-d         : Enabling Debug"
     eco "-a         : Toggling Assertions"
@@ -87,6 +87,14 @@ show_help(){
     eco "-qs        : QuestaSim Tool"
     eco "-vl        : Verilator Tool"
     eco "-iv        : Igarus Verilog Tool"
+    eco "-h         : Show the help section"
+    eco ""
+    eco "Command Switches"
+    eco ""
+    eco "--clean    : Remove all the redundant files and directories"
+    eco "--build    : Compile & build the sim run"
+    eco "--vlwrap   : Generate a verilator wrapper for the verilog top file"
+    eco "--help     : Show the help section"
 }
 
 lb_clean(){
@@ -301,6 +309,12 @@ run_build(){
 check_switch(){
     ntemp=0;
     anum=$#;
+
+    if [ $anum -eq 0 ]
+    then
+        show_help
+        exit 1
+    fi
 
     while [ $ntemp -ne $anum ]
     do        
