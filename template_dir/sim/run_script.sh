@@ -72,6 +72,7 @@ show_help(){
     eco "--------------------------"
     eco "Syntax : run_script [arg1] [arg2] ..."
 
+    eco ""
     eco "Control Switches"
     eco ""
     eco "-d         : Enabling Debug"
